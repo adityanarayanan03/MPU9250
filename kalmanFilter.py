@@ -61,14 +61,14 @@ for row in fullData:
 	
 	#Get Angles from raw measurements
 	phi_hat_acc = math.atan(a_y/ math.sqrt(a_x**2 + a_z**2))
-	theta_hat_acc = math.atan((-1*a_x) / math.sqrt(a_y**2+a_z**2))
+	theta_hat_acc = math.atan((a_x) / math.sqrt(a_y**2+a_z**2))
 	
 	phi_hat = state_estimate.item((0,0))
 	theta_hat = state_estimate.item((1,0))
 	psi_hat = state_estimate.item((2,0))
 	
 	psi_hat_mag=math.atan((-1*y_mag*math.cos(phi_hat)+z_mag*math.sin(phi_hat))/(x_mag*math.cos(theta_hat)+y_mag*math.sin(theta_hat)*math.sin(phi_hat)+z_mag*math.sin(theta_hat)*math.cos(phi_hat)))
-	psi_hat_mag = 2 * psi_hat_mag - (2*math.pi)/3
+	psi_hat_mag = 2 * psi_hat_mag - math.radians(-48.16)
 	
 	phi_dot = p+math.sin(phi_hat)*math.tan(theta_hat)*q+math.cos(phi_hat)*math.tan(theta_hat)*r
 	theta_dot = math.cos(phi_hat)*q - math.sin(phi_hat)*r
@@ -87,12 +87,13 @@ for row in fullData:
 	state_estimate = state_estimate + K*r
 	P = (np.identity(6) - K*C) * P;
 	state_estimate_degrees = state_estimate * (180/math.pi)
-	phi_angles.append(state_estimate_degrees.item((0,0)))
+	phi_angles.append(-1 * state_estimate_degrees.item((0,0)))
 	theta_angles.append(state_estimate_degrees.item((1,0)))
 	psi_angles.append(state_estimate_degrees.item((2,0)))	
 	
 plt.figure(1)
-plt.plot(times, psi_angles)
-plt.plot(times, theta_angles)
-plt.plot(times, phi_angles)
+plt.plot(times, psi_angles, label = 'yaw Axis')
+plt.plot(times, theta_angles, label = 'pitch Axis')
+plt.plot(times, phi_angles, label = 'roll Axis')
+plt.legend(loc = 'upper right')
 plt.savefig('/home/pi/MPU9250/'+fileName+'/angleEstimations/filtered.png')
