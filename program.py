@@ -47,6 +47,14 @@ calAccEuler = np.matrix([[0],[0],[0]])
 calMagEuler = np.matrix([[0],[0],[0]])
 magPsiValues = []
 
+calGyroYaw = []
+calGyroPitch = []
+calGyroRoll = []
+
+gyroRollCorrection = 0
+gyroPitchCorrection = 0
+gyroYawCorrection = 0
+
 #Time-Related Variables:
 dt = .0145 #delta T for integration
 times = [] #x-axis for plotting
@@ -95,11 +103,11 @@ def getData(currentTime):
 	gyro = sensor.readGyro()               #Reads the gyro list? from the sensor
 	mag = sensor.readMagnet()              #Reads the magnetometer list? from the sensor
 	times.append(currentTime)
-	gyroXCorr = -1 * gyro['x'] + .69981314433
+	gyroXCorr = -1 * gyro['x'] - gyroRollCorrection
 	gyroRoll.append(gyroXCorr)
-	gyroYCorr = gyro['y'] - 3.50427586207
+	gyroYCorr = gyro['y'] - gyroPitchCorrection
 	gyroPitch.append(gyroYCorr)
-	gyroZCorr = -1 * gyro['z'] + 1.52635166458
+	gyroZCorr = -1 * gyro['z'] -gyroYawCorrection
 	gyroYaw.append(gyroZCorr)
 	accelXCorr = -1 * (10 * accel['x'] - .0660602258469)
 	accX.append(accelXCorr)
@@ -131,6 +139,7 @@ def graph(figNum,series1,label1,series2,label2,series3,label3,plotTitle,plotYLab
 	
 #Nine calls to graph function with proper data series
 def saveAndPlot():
+	np.savetxt("/home/pi/MPU9250/"+fileName+"/rawData.csv", dataSet, delimiter = ',')
 	graph(1,gyroYaw,'gyroYaw',gyroPitch,'gyroPitch',gyroRoll,'gyroRoll',"Gyro Output vs. Time","Gyro Output (dps)","/rawOutput/gyroOutput.png")
 	graph(2,accX,'accX',accY,'Acc Y',accZ,'Acc Z',"Acc. Output vs. Time","Acc. Output (m/s/s)","/rawOutput/accelerometerOutput.png")
 	graph(3,magX,'Mag X',magY,'Mag Y',magZ,'Mag Z',"Magnetometer Output vs. Time","Magnetometer Output (uT)","/rawOutput/magnetometerOutput.png")
@@ -147,14 +156,22 @@ for i in range(100):
 	calSensorValues = getData(0)
 	calAccEuler = accCalcEuler(calSensorValues)
 	calMagEuler = magCalcEuler(calSensorValues, calAccEuler)
+	calGyroRoll.append(calSensorValues[1])
+	calGyroPitch.append(calSensorValues[2])
+	calGyroYaw.append(calSensorValues[3])
 	magPsiValues.append(calMagEuler.item((2,0)))
 	time.sleep(.007)
 magCorrectionMean = np.mean(magPsiValues)
+print magCorrectionMean
+gyroRollCorrection = np.mean(calGyroRoll)
+gyroPitchCorrection = np.mean(calGyroPitch)
+gyroYawCorrection = np.mean(calGyroYaw)
 print 'calibration over, starting in 3 seconds'
 time.sleep(3)
 
 #Resetting Variables Common to calibration sequence and data-collection
 times = []
+dataSet = []
 
 gyroYaw = []
 gyroPitch = []
@@ -175,7 +192,7 @@ currentTime = 0
 #data collection sequence
 while (currentTime<runTime):
 	currentTime = time.time() - startTime
-	print currentTime
+	#print currentTime
 	sensorValues = getData(currentTime)
 	
 	#Call to calculations and storing calculated Values for Plotting
@@ -200,3 +217,5 @@ while (currentTime<runTime):
 if(saveIndicator == "y" or saveIndicator == "Y"):
 	print "Saving data. This takes forever."
 	saveAndPlot()
+
+print magCorrectionMean
