@@ -83,7 +83,7 @@ for row in fullData:
 	Z = np.matrix([[phi_hat_acc],[theta_hat_acc],[psi_hat_mag]])
 	r = Z - C*state_estimate
 	S = R + C*P*np.transpose(C)
-	K = P*np.transpose(C)*(S**-1)
+	K = P*np.transpose(C)*(S**-1) 
 	state_estimate = state_estimate + K*r
 	P = (np.identity(6) - K*C) * P;
 	state_estimate_degrees = state_estimate * (180/math.pi)
