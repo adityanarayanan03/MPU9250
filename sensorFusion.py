@@ -65,7 +65,7 @@ A = np.matrix([[1,0,0,-dt,0,0],[0,1,0,0,-dt,0],[0,0,1,0,0,-dt],[0,0,0,1,0,0],[0,
 B = np.matrix([[dt,0,0],[0,dt,0],[0,0,dt],[0,0,0],[0,0,0],[0,0,0]])
 C = np.matrix([[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0]])
 P = np.identity(6)
-Q = np.identity(6) * .005
+Q = np.identity(6) * .0005
 R = np.matrix([[.1,0,0],[0,.1,0],[0,0,10]])
 state_estimate = np.matrix([[0],[0],[0],[0],[0],[0]])
 filteredData = np.matrix([[0],[0],[0]])
@@ -117,7 +117,7 @@ def getData(currentTime):
 	gyro = sensor.readGyro()               #Reads the gyro list? from the sensor
 	mag = sensor.readMagnet()              #Reads the magnetometer list? from the sensor
 	times.append(currentTime)
-	gyroXCorr = -1 * (gyro['x'] - gyroRollCorrection)
+	gyroXCorr = -1 * (gyro['x']) - gyroRollCorrection
 	gyroRoll.append(gyroXCorr)
 	gyroYCorr = gyro['y'] - gyroPitchCorrection
 	gyroPitch.append(gyroYCorr)
@@ -219,8 +219,8 @@ def saveAndPlot():
 	graph(7,gyroEulerYaw,'gyroEulerYaw',accEulerYaw,'accEulerYaw',magEulerYaw,'magEulerYaw',"Yaw Angle Comparisons","Angle (degrees)","/comparisons/yawComparisons.png")
 	graph(8,gyroEulerPitch,'gyroEulerPitch',accEulerPitch,'accEulerPitch',magEulerPitch,'magEulerPitch',"Pitch Angle Comparisons","Angle (degrees)","/comparisons/pitchComparisons.png")
 	graph(9,gyroEulerRoll,'gyroEulerRoll',accEulerRoll,'accEulerRoll',magEulerRoll,'gmagEulerRoll',"Roll Angle Comparisons","Angle (degrees)","/comparisons/rollComparisons.png")
-	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
-	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
+	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroEulerRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
+	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
 	
 #Calibration Sequence
@@ -286,7 +286,7 @@ while (currentTime<runTime):
 	magEulerYaw.append(2 * (magEulerAngle.item((2,0)) - magCorrectionMean))
 	
 	filteredData = kalmanFilter(sensorValues, magCorrectionMean)
-	filteredRoll.append(filteredData.item((0,0)))
+	filteredRoll.append(-1 * filteredData.item((0,0)))
 	filteredPitch.append(filteredData.item((1,0)))
 	filteredYaw.append(filteredData.item((2,0)))
 	
