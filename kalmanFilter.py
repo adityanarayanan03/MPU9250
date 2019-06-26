@@ -45,7 +45,7 @@ for row in fullData:
 	a_x = row[4]
 	a_y = row[5]
 	a_z = row[6]
-	accNorm = math.sqrt(a_x**2 + a_y**2 + a_z**2)
+	accNorm = 1#math.sqrt(a_x**2 + a_y**2 + a_z**2)
 	a_x = a_x/accNorm
 	a_y = a_y/accNorm
 	a_z = a_z/accNorm
@@ -54,7 +54,7 @@ for row in fullData:
 	m_x = row[7]
 	m_y = row[8]
 	m_z = row[9]
-	magNorm = math.sqrt(m_x**2 + m_y**2 + m_z**2)
+	magNorm = 1#math.sqrt(m_x**2 + m_y**2 + m_z**2)
 	x_mag = m_x/magNorm
 	y_mag = m_y/magNorm
 	z_mag = m_z/magNorm
@@ -68,7 +68,7 @@ for row in fullData:
 	psi_hat = state_estimate.item((2,0))
 	
 	psi_hat_mag=math.atan((-1*y_mag*math.cos(phi_hat)+z_mag*math.sin(phi_hat))/(x_mag*math.cos(theta_hat)+y_mag*math.sin(theta_hat)*math.sin(phi_hat)+z_mag*math.sin(theta_hat)*math.cos(phi_hat)))
-	psi_hat_mag = 2 * psi_hat_mag - math.radians(-48.16)
+	psi_hat_mag = 2 * psi_hat_mag - math.radians(-15.1)
 	
 	phi_dot = p+math.sin(phi_hat)*math.tan(theta_hat)*q+math.cos(phi_hat)*math.tan(theta_hat)*r
 	theta_dot = math.cos(phi_hat)*q - math.sin(phi_hat)*r
@@ -83,7 +83,7 @@ for row in fullData:
 	Z = np.matrix([[phi_hat_acc],[theta_hat_acc],[psi_hat_mag]])
 	r = Z - C*state_estimate
 	S = R + C*P*np.transpose(C)
-	K = P*np.transpose(C)*(S**-1) 
+	K = P*np.transpose(C)*(np.linalg.inv(S)) 
 	state_estimate = state_estimate + K*r
 	P = (np.identity(6) - K*C) * P;
 	state_estimate_degrees = state_estimate * (180/math.pi)
@@ -96,4 +96,4 @@ plt.plot(times, psi_angles, label = 'yaw Axis')
 plt.plot(times, theta_angles, label = 'pitch Axis')
 plt.plot(times, phi_angles, label = 'roll Axis')
 plt.legend(loc = 'upper right')
-plt.savefig('/home/pi/MPU9250/'+fileName+'/angleEstimations/filtered.png')
+plt.savefig('/home/pi/MPU9250/'+fileName+'/angleEstimations/inverseFunction.png')
