@@ -1,3 +1,10 @@
+'''
+NOTES:
+1.	The Euler Angle Calculation functions are being
+	called multiple times with the same values. For
+	speed, maybe pass the Kalman Filter calculated 
+	values right off the bat.
+'''
 #Imports
 import FaBo9Axis_MPU9250
 import time
@@ -65,7 +72,7 @@ A = np.matrix([[1,0,0,-dt,0,0],[0,1,0,0,-dt,0],[0,0,1,0,0,-dt],[0,0,0,1,0,0],[0,
 B = np.matrix([[dt,0,0],[0,dt,0],[0,0,dt],[0,0,0],[0,0,0],[0,0,0]])
 C = np.matrix([[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0]])
 P = np.identity(6)
-Q = np.identity(6) * .005
+Q = np.identity(6) * .0005
 R = np.matrix([[.1,0,0],[0,.1,0],[0,0,10]])
 state_estimate = np.matrix([[0],[0],[0],[0],[0],[0]])
 filteredData = np.matrix([[0],[0],[0]])
@@ -140,7 +147,7 @@ def getData(currentTime):
 	return sensorValues
 	
 #Function for Kalman Filtering
-def kalmanFilter(row, magCorrectionMean):
+def kalmanFilter(sensorValues, magCorrectionMean):
 	#tell python to modify global forms
 	global A
 	global B
@@ -151,29 +158,29 @@ def kalmanFilter(row, magCorrectionMean):
 	global state_estimate
 	
 	#Collect Gyro Data
-	p = math.radians(row[1])
-	q = math.radians(row[2])
-	r = math.radians(row[3])
+	p = math.radians(sensorValues[1])
+	q = math.radians(sensorValues[2])
+	r = math.radians(sensorValues[3])
 	
 	#Collect Accel Data
-	a_x = row[4]
-	a_y = row[5]
-	a_z = row[6]
+	a_x = sensorValues[4]
+	a_y = sensorValues[5]
+	a_z = sensorValues[6]
 	
 	#Collect Mag Data
-	x_mag = row[7]
-	y_mag = row[8]
-	z_mag = row[9]
+	x_mag = sensorValues[7]
+	y_mag = sensorValues[8]
+	z_mag = sensorValues[9]
 	
 	#calculate Angles from measurements
-	phi_hat_acc = math.atan(a_y/ math.sqrt(a_x**2 + a_z**2))
-	theta_hat_acc = math.atan((a_x) / math.sqrt(a_y**2+a_z**2))
-	
+	phi_hat_acc = math.radians(accCalcEuler(sensorValues).item((0,0)))
+	theta_hat_acc = math.radians(accCalcEuler(sensorValues).item((1,0)))
+		
 	phi_hat = state_estimate.item((0,0))
 	theta_hat = state_estimate.item((1,0))
 	psi_hat = state_estimate.item((2,0))
 	
-	psi_hat_mag=math.atan((-1*y_mag*math.cos(phi_hat)+z_mag*math.sin(phi_hat))/(x_mag*math.cos(theta_hat)+y_mag*math.sin(theta_hat)*math.sin(phi_hat)+z_mag*math.sin(theta_hat)*math.cos(phi_hat)))
+	psi_hat_mag= math.radians(magCalcEuler(sensorValues,accCalcEuler(sensorValues)).item((2,0)))
 	psi_hat_mag = 2 * psi_hat_mag - math.radians(2 * magCorrectionMean)
 	
 	phi_dot = p+math.sin(phi_hat)*math.tan(theta_hat)*q+math.cos(phi_hat)*math.tan(theta_hat)*r
@@ -219,8 +226,8 @@ def saveAndPlot():
 	graph(7,gyroEulerYaw,'gyroEulerYaw',accEulerYaw,'accEulerYaw',magEulerYaw,'magEulerYaw',"Yaw Angle Comparisons","Angle (degrees)","/comparisons/yawComparisons.png")
 	graph(8,gyroEulerPitch,'gyroEulerPitch',accEulerPitch,'accEulerPitch',magEulerPitch,'magEulerPitch',"Pitch Angle Comparisons","Angle (degrees)","/comparisons/pitchComparisons.png")
 	graph(9,gyroEulerRoll,'gyroEulerRoll',accEulerRoll,'accEulerRoll',magEulerRoll,'gmagEulerRoll',"Roll Angle Comparisons","Angle (degrees)","/comparisons/rollComparisons.png")
-	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
-	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
+	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroEulerRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
+	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
 	
 #Calibration Sequence
