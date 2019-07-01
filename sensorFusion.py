@@ -54,10 +54,6 @@ calAccEuler = np.matrix([[0],[0],[0]])
 calMagEuler = np.matrix([[0],[0],[0]])
 magPsiValues = []
 
-gyroRollCorrection = 0
-gyroPitchCorrection = 0
-gyroYawCorrection = 0
-
 accXCorrection = 0
 accYCorrection = 0
 accZCorrection = 0
@@ -108,23 +104,23 @@ def gyroCalcEuler(sensorValues, prevEulerAngle):
     eulerAngle = prevEulerAngle + M*currentAngularVelocities*dt
     return eulerAngle
     
-def magCalcEuler(sensorValues, accEulerAngle):
+def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
     phi = 0
     theta = 0
     accPhi = -1 * math.radians(accEulerAngle.item((0,0)))
     accTheta = -1 * math.radians(accEulerAngle.item((1,0)))
     psi = math.atan((sensorValues[9]*math.sin(accPhi) - sensorValues[8]*math.cos(accPhi))/((sensorValues[7]*math.cos(accTheta))+(sensorValues[8]*math.sin(accTheta)*math.sin(accPhi))+(sensorValues[9]*math.sin(accTheta)*math.cos(accPhi))))
-    psi = math.degrees(psi)
+    psi = 2 * (math.degrees(psi) - magCorrectionMean)
     eulerEstimate = np.matrix([[phi],[theta],[psi]])
     return eulerEstimate
     
 #Function to collect data and store in temporary list    
-def getData(currentTime):
+def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection):
 	accel = sensor.readAccel()             #Reads the acceleration list? from the sensor
 	gyro = sensor.readGyro()               #Reads the gyro list? from the sensor
 	mag = sensor.readMagnet()              #Reads the magnetometer list? from the sensor
 	times.append(currentTime)
-	gyroXCorr = -1 * (gyro['x'] - gyroRollCorrection)
+	gyroXCorr = -1 * (gyro['x'] + gyroRollCorrection)
 	gyroRoll.append(gyroXCorr)
 	gyroYCorr = gyro['y'] - gyroPitchCorrection
 	gyroPitch.append(gyroYCorr)
@@ -148,7 +144,7 @@ def getData(currentTime):
 	
 #Function for Kalman Filtering
 def kalmanFilter(sensorValues, magCorrectionMean):
-	#tell python to modify global forms
+	#tell python to modify global forms of variables
 	global A
 	global B
 	global C
@@ -180,8 +176,8 @@ def kalmanFilter(sensorValues, magCorrectionMean):
 	theta_hat = state_estimate.item((1,0))
 	psi_hat = state_estimate.item((2,0))
 	
-	psi_hat_mag= math.radians(magCalcEuler(sensorValues,accCalcEuler(sensorValues)).item((2,0)))
-	psi_hat_mag = 2 * psi_hat_mag - math.radians(2 * magCorrectionMean)
+	psi_hat_mag= math.radians(magCalcEuler(sensorValues,accCalcEuler(sensorValues), magCorrectionMean).item((2,0)))
+	#psi_hat_mag = 2 * psi_hat_mag - math.radians(2 * magCorrectionMean)
 	
 	phi_dot = p+math.sin(phi_hat)*math.tan(theta_hat)*q+math.cos(phi_hat)*math.tan(theta_hat)*r
 	theta_dot = math.cos(phi_hat)*q - math.sin(phi_hat)*r
@@ -233,9 +229,9 @@ def saveAndPlot():
 #Calibration Sequence
 print 'calibrating'
 for i in range(100):
-	calSensorValues = getData(0)
+	calSensorValues = getData(0,0,0,0)
 	calAccEuler = accCalcEuler(calSensorValues)
-	calMagEuler = magCalcEuler(calSensorValues, calAccEuler)
+	calMagEuler = magCalcEuler(calSensorValues, calAccEuler, 0)
 	magPsiValues.append(calMagEuler.item((2,0)))
 	time.sleep(.007)
 magCorrectionMean = np.mean(magPsiValues)
@@ -273,7 +269,7 @@ currentTime = 0
 while (currentTime<runTime):
 	currentTime = time.time() - startTime
 	#print currentTime
-	sensorValues = getData(currentTime)
+	sensorValues = getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection)
 	
 	#Call to calculations and storing calculated Values for Plotting
 	gyroEulerAngle = gyroCalcEuler(sensorValues, gyroEulerAngle)
@@ -287,10 +283,10 @@ while (currentTime<runTime):
 	accEulerPitch.append(accEulerAngle.item((1,0)))
 	accEulerYaw.append(accEulerAngle.item((2,0)))
         
-	magEulerAngle = magCalcEuler(sensorValues, accEulerAngle)
+	magEulerAngle = magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean)
 	magEulerRoll.append(magEulerAngle.item((0,0)))
 	magEulerPitch.append(magEulerAngle.item((1,0)))
-	magEulerYaw.append(2 * (magEulerAngle.item((2,0)) - magCorrectionMean))
+	magEulerYaw.append(magEulerAngle.item((2,0)))
 	
 	filteredData = kalmanFilter(sensorValues, magCorrectionMean)
 	filteredRoll.append(filteredData.item((0,0)))
