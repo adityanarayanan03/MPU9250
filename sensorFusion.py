@@ -120,6 +120,7 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	gyro = sensor.readGyro()               #Reads the gyro list? from the sensor
 	mag = sensor.readMagnet()              #Reads the magnetometer list? from the sensor
 	times.append(currentTime)
+	
 	gyroXCorr = -1 * (gyro['x'] + gyroRollCorrection)
 	gyroRoll.append(gyroXCorr)
 	gyroYCorr = gyro['y'] - gyroPitchCorrection
@@ -289,7 +290,7 @@ while (currentTime<runTime):
 	magEulerYaw.append(magEulerAngle.item((2,0)))
 	
 	filteredData = kalmanFilter(sensorValues, magCorrectionMean)
-	filteredRoll.append(filteredData.item((0,0)))
+	filteredRoll.append(-1 * filteredData.item((0,0)))
 	filteredPitch.append(filteredData.item((1,0)))
 	filteredYaw.append(filteredData.item((2,0)))
 	
