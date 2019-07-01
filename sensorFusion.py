@@ -4,6 +4,10 @@ NOTES:
 	called multiple times with the same values. For
 	speed, maybe pass the Kalman Filter calculated 
 	values right off the bat.
+	
+2,  Start 7/2: Fix the mag scaling. it aint 2 anymore.
+	Then start setting calculated angles to correct
+	directions.
 '''
 #Imports
 import FaBo9Axis_MPU9250
@@ -93,7 +97,7 @@ def accCalcEuler(sensorValues):
     theta = math.atan((-1*sensorValues[4])/(math.sqrt((sensorValues[5])**2 + (sensorValues[6])**2)))
     theta = math.degrees(theta)
     psi = 0
-    eulerEstimate = np.matrix([[-1*phi],[-1*theta],[-1*psi]]) 
+    eulerEstimate = np.matrix([[phi],[theta],[psi]]) 
     return eulerEstimate    
     
 def gyroCalcEuler(sensorValues, prevEulerAngle):
@@ -105,14 +109,17 @@ def gyroCalcEuler(sensorValues, prevEulerAngle):
     return eulerAngle
     
 def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
-    phi = 0
-    theta = 0
-    accPhi = -1 * math.radians(accEulerAngle.item((0,0)))
-    accTheta = -1 * math.radians(accEulerAngle.item((1,0)))
-    psi = math.atan((sensorValues[9]*math.sin(accPhi) - sensorValues[8]*math.cos(accPhi))/((sensorValues[7]*math.cos(accTheta))+(sensorValues[8]*math.sin(accTheta)*math.sin(accPhi))+(sensorValues[9]*math.sin(accTheta)*math.cos(accPhi))))
-    psi = 2 * (math.degrees(psi) - magCorrectionMean)
-    eulerEstimate = np.matrix([[phi],[theta],[psi]])
-    return eulerEstimate
+	phi = 0
+	theta = 0
+	accPhi = math.radians(accEulerAngle.item((0,0)))
+	accTheta = math.radians(accEulerAngle.item((1,0)))
+	psi = math.atan((sensorValues[9]*math.sin(accPhi) - sensorValues[8]*math.cos(accPhi))/((sensorValues[7]*math.cos(accTheta))+(sensorValues[8]*math.sin(accTheta)*math.sin(accPhi))+(sensorValues[9]*math.sin(accTheta)*math.cos(accPhi))))
+	if (magCorrectionMean == 0):
+		psi = math.degrees(psi)
+	else:
+		psi = 2.860 * (math.degrees(psi) - magCorrectionMean)
+	eulerEstimate = np.matrix([[phi],[theta],[psi]])
+	return eulerEstimate
     
 #Function to collect data and store in temporary list    
 def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection):
@@ -125,7 +132,7 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	gyroRoll.append(gyroXCorr)
 	gyroYCorr = gyro['y'] - gyroPitchCorrection
 	gyroPitch.append(gyroYCorr)
-	gyroZCorr = -1 * gyro['z'] -gyroYawCorrection
+	gyroZCorr = gyro['z'] -gyroYawCorrection
 	gyroYaw.append(gyroZCorr)
 	accelXCorr = -10 * (accel['x']) - accXCorrection
 	accX.append(accelXCorr)
@@ -133,7 +140,7 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	accY.append(accelYCorr)
 	accelZCorr = 10 * accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = mag['x']
+	magXCorr = -1*mag['x']
 	magX.append(magXCorr)
 	magYCorr = mag['y']
 	magY.append(magYCorr)
@@ -236,6 +243,7 @@ for i in range(100):
 	magPsiValues.append(calMagEuler.item((2,0)))
 	time.sleep(.007)
 magCorrectionMean = np.mean(magPsiValues)
+print magCorrectionMean
 gyroRollCorrection = np.mean(gyroRoll)
 gyroPitchCorrection = np.mean(gyroPitch)
 gyroYawCorrection = np.mean(gyroYaw)
@@ -290,7 +298,7 @@ while (currentTime<runTime):
 	magEulerYaw.append(magEulerAngle.item((2,0)))
 	
 	filteredData = kalmanFilter(sensorValues, magCorrectionMean)
-	filteredRoll.append(-1 * filteredData.item((0,0)))
+	filteredRoll.append(filteredData.item((0,0)))
 	filteredPitch.append(filteredData.item((1,0)))
 	filteredYaw.append(filteredData.item((2,0)))
 	
