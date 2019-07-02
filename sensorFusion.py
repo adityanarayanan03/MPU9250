@@ -4,10 +4,6 @@ NOTES:
 	called multiple times with the same values. For
 	speed, maybe pass the Kalman Filter calculated 
 	values right off the bat.
-	
-2,  Start 7/2: Fix the mag scaling. it aint 2 anymore.
-	Then start setting calculated angles to correct
-	directions.
 '''
 #Imports
 import FaBo9Axis_MPU9250
@@ -16,6 +12,7 @@ import sys
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import os
 
 #Creating Object
@@ -63,7 +60,7 @@ accYCorrection = 0
 accZCorrection = 0
 
 #Time-Related Variables:
-dt = .0145 #delta T for integration
+dt = .0165 #delta T for integration
 times = [] #x-axis for plotting
 runTime = int(input("Time for trial:   ")) #user desired run-time
 
@@ -81,7 +78,7 @@ filteredPitch = []
 filteredYaw = []
 
 #Creating directories if user wants to save data
-saveIndicator = str(input("Do you want to save data from this run? y/n    "))
+saveIndicator = str(input("Do you want to save data from this run? y/n	"))
 if (saveIndicator== "y" or saveIndicator == "Y"):
 	fileName = str(input("Enter File Name:   "))
 	os.mkdir(fileName)
@@ -92,22 +89,22 @@ if (saveIndicator== "y" or saveIndicator == "Y"):
 	
 #Functions for calculating Euler Angles	
 def accCalcEuler(sensorValues):
-    phi = math.atan((sensorValues[5])/(math.sqrt((sensorValues[4])**2 + (sensorValues[6])**2)))
-    phi = math.degrees(phi)
-    theta = math.atan((-1*sensorValues[4])/(math.sqrt((sensorValues[5])**2 + (sensorValues[6])**2)))
-    theta = math.degrees(theta)
-    psi = 0
-    eulerEstimate = np.matrix([[phi],[theta],[psi]]) 
-    return eulerEstimate    
-    
+	phi = math.atan((sensorValues[5])/(math.sqrt((sensorValues[4])**2 + (sensorValues[6])**2)))
+	phi = math.degrees(phi)
+	theta = math.atan((-1*sensorValues[4])/(math.sqrt((sensorValues[5])**2 + (sensorValues[6])**2)))
+	theta = math.degrees(theta)
+	psi = 0
+	eulerEstimate = np.matrix([[phi],[theta],[psi]]) 
+	return eulerEstimate
+
 def gyroCalcEuler(sensorValues, prevEulerAngle):
-    currentAngularVelocities = np.matrix([[math.radians(sensorValues[1])],[math.radians(sensorValues[2])],[math.radians(sensorValues[3])]])
-    phi = prevEulerAngle.item((0,0))
-    theta = prevEulerAngle.item((1,0))
-    M = np.matrix([[1, (math.tan(theta)*math.sin(phi)), (math.tan(theta)*math.cos(phi))], [0, math.cos(phi), -1*math.sin(phi)], [0, (math.sin(phi)/math.cos(theta)), (math.cos(phi)/math.cos(theta))]])
-    eulerAngle = prevEulerAngle + M*currentAngularVelocities*dt
-    return eulerAngle
-    
+	currentAngularVelocities = np.matrix([[math.radians(sensorValues[1])],[math.radians(sensorValues[2])],[math.radians(sensorValues[3])]])
+	phi = prevEulerAngle.item((0,0))
+	theta = prevEulerAngle.item((1,0))
+	M = np.matrix([[1, (math.tan(theta)*math.sin(phi)), (math.tan(theta)*math.cos(phi))], [0, math.cos(phi), -1*math.sin(phi)], [0, (math.sin(phi)/math.cos(theta)), (math.cos(phi)/math.cos(theta))]])
+	eulerAngle = prevEulerAngle + M*currentAngularVelocities*dt
+	return eulerAngle
+
 def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
 	phi = 0
 	theta = 0
@@ -117,30 +114,30 @@ def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
 	if (magCorrectionMean == 0):
 		psi = math.degrees(psi)
 	else:
-		psi = 2.860 * (math.degrees(psi) - magCorrectionMean)
+		psi = math.degrees(psi) - magCorrectionMean
 	eulerEstimate = np.matrix([[phi],[theta],[psi]])
 	return eulerEstimate
-    
-#Function to collect data and store in temporary list    
+
+#Function to collect data and store in temporary list
 def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection):
-	accel = sensor.readAccel()             #Reads the acceleration list? from the sensor
-	gyro = sensor.readGyro()               #Reads the gyro list? from the sensor
-	mag = sensor.readMagnet()              #Reads the magnetometer list? from the sensor
+	accel = sensor.readAccel()				#Reads the acceleration list? from the sensor
+	gyro = sensor.readGyro()				#Reads the gyro list? from the sensor
+	mag = sensor.readMagnet()				#Reads the magnetometer list? from the sensor
 	times.append(currentTime)
 	
-	gyroXCorr = -1 * (gyro['x'] + gyroRollCorrection)
+	gyroXCorr = gyro['x'] - gyroRollCorrection
 	gyroRoll.append(gyroXCorr)
 	gyroYCorr = gyro['y'] - gyroPitchCorrection
 	gyroPitch.append(gyroYCorr)
-	gyroZCorr = gyro['z'] -gyroYawCorrection
+	gyroZCorr = gyro['z'] - gyroYawCorrection
 	gyroYaw.append(gyroZCorr)
-	accelXCorr = -10 * (accel['x']) - accXCorrection
+	accelXCorr = accel['x'] - accXCorrection
 	accX.append(accelXCorr)
-	accelYCorr = 10 * (accel['y']) - accYCorrection
+	accelYCorr = accel['y'] - accYCorrection
 	accY.append(accelYCorr)
-	accelZCorr = 10 * accel['z'] + (9.8005-9.78941028858)
+	accelZCorr = accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = -1*mag['x']
+	magXCorr = mag['x']
 	magX.append(magXCorr)
 	magYCorr = mag['y']
 	magY.append(magYCorr)
@@ -233,6 +230,9 @@ def saveAndPlot():
 	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroEulerRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
 	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
+	plt.figure(13)
+	Axes3D.plot_trisurf(np.asarray(magX),np.asarray(magY),np.asarray(magZ))
+	plt.savefig('/home/pi/MPU9250/'+fileName+'XvsZ.png')
 	
 #Calibration Sequence
 print 'calibrating'
@@ -241,7 +241,7 @@ for i in range(100):
 	calAccEuler = accCalcEuler(calSensorValues)
 	calMagEuler = magCalcEuler(calSensorValues, calAccEuler, 0)
 	magPsiValues.append(calMagEuler.item((2,0)))
-	time.sleep(.007)
+	time.sleep(.009)
 magCorrectionMean = np.mean(magPsiValues)
 print magCorrectionMean
 gyroRollCorrection = np.mean(gyroRoll)
@@ -285,13 +285,13 @@ while (currentTime<runTime):
 	gyroEulerRoll.append(math.degrees(gyroEulerAngle.item((0,0))))
 	gyroEulerPitch.append(math.degrees(gyroEulerAngle.item((1,0))))
 	gyroEulerYaw.append(math.degrees(gyroEulerAngle.item((2,0))))
-                    
-                    
+
+
 	accEulerAngle = accCalcEuler(sensorValues)
 	accEulerRoll.append(accEulerAngle.item((0,0)))
 	accEulerPitch.append(accEulerAngle.item((1,0)))
 	accEulerYaw.append(accEulerAngle.item((2,0)))
-        
+
 	magEulerAngle = magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean)
 	magEulerRoll.append(magEulerAngle.item((0,0)))
 	magEulerPitch.append(magEulerAngle.item((1,0)))
@@ -302,7 +302,7 @@ while (currentTime<runTime):
 	filteredPitch.append(filteredData.item((1,0)))
 	filteredYaw.append(filteredData.item((2,0)))
 	
-	time.sleep(.007)
+	time.sleep(.009)
 
 #Saving plots if requested
 if(saveIndicator == "y" or saveIndicator == "Y"):
