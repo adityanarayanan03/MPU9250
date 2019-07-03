@@ -89,9 +89,9 @@ if (saveIndicator== "y" or saveIndicator == "Y"):
 	
 #Functions for calculating Euler Angles	
 def accCalcEuler(sensorValues):
-	phi = math.atan((sensorValues[5])/(math.sqrt((sensorValues[4])**2 + (sensorValues[6])**2)))
+	phi = math.atan2((sensorValues[5]),(math.sqrt((sensorValues[4])**2 + (sensorValues[6])**2)))
 	phi = math.degrees(phi)
-	theta = math.atan((-1*sensorValues[4])/(math.sqrt((sensorValues[5])**2 + (sensorValues[6])**2)))
+	theta = math.atan2((-1*sensorValues[4]),(math.sqrt((sensorValues[5])**2 + (sensorValues[6])**2)))
 	theta = math.degrees(theta)
 	psi = 0
 	eulerEstimate = np.matrix([[phi],[theta],[psi]]) 
@@ -137,11 +137,11 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	accY.append(accelYCorr)
 	accelZCorr = accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = mag['x']
+	magXCorr = ((mag['x']-6.5)/56)*1.5
 	magX.append(magXCorr)
-	magYCorr = mag['y']
+	magYCorr = ((mag['y']+26)/52)*1.4
 	magY.append(magYCorr)
-	magZCorr = mag['z']
+	magZCorr = (mag['z']+26)/56
 	magZ.append(magZCorr)
 	sensorValues = [currentTime, gyroXCorr, gyroYCorr, gyroZCorr, accelXCorr, accelYCorr, accelZCorr, magXCorr, magYCorr, magZCorr]
 	dataSet.append(sensorValues)
@@ -231,8 +231,8 @@ def saveAndPlot():
 	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
 	plt.figure(13)
-	Axes3D.plot_trisurf(np.asarray(magX),np.asarray(magY),np.asarray(magZ))
-	plt.savefig('/home/pi/MPU9250/'+fileName+'XvsZ.png')
+	plt.plot(magZ, magY)
+	plt.savefig('y_vs_z.png')
 	
 #Calibration Sequence
 print 'calibrating'
@@ -308,4 +308,3 @@ while (currentTime<runTime):
 if(saveIndicator == "y" or saveIndicator == "Y"):
 	print "Saving data. This takes forever."
 	saveAndPlot()
-
