@@ -12,7 +12,6 @@ import sys
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import os
 
 #Creating Object
@@ -137,11 +136,11 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	accY.append(accelYCorr)
 	accelZCorr = accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = mag['x']
+	magXCorr = mag['x'] -7.5
 	magX.append(magXCorr)
-	magYCorr = mag['y']
+	magYCorr = mag['y']-26.0
 	magY.append(magYCorr)
-	magZCorr = mag['z']
+	magZCorr = mag['z']+26.0
 	magZ.append(magZCorr)
 	sensorValues = [currentTime, gyroXCorr, gyroYCorr, gyroZCorr, accelXCorr, accelYCorr, accelZCorr, magXCorr, magYCorr, magZCorr]
 	dataSet.append(sensorValues)
@@ -162,16 +161,6 @@ def kalmanFilter(sensorValues, magCorrectionMean):
 	p = math.radians(sensorValues[1])
 	q = math.radians(sensorValues[2])
 	r = math.radians(sensorValues[3])
-	
-	#Collect Accel Data
-	a_x = sensorValues[4]
-	a_y = sensorValues[5]
-	a_z = sensorValues[6]
-	
-	#Collect Mag Data
-	x_mag = sensorValues[7]
-	y_mag = sensorValues[8]
-	z_mag = sensorValues[9]
 	
 	#calculate Angles from measurements
 	phi_hat_acc = math.radians(accCalcEuler(sensorValues).item((0,0)))
@@ -231,8 +220,11 @@ def saveAndPlot():
 	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
 	plt.figure(13)
-	plt.plot(magZ, magY)
-	plt.savefig('y_vs_z.png')
+	plt.plot(magX, magY, label = 'yaw Axis')
+	plt.plot(magX, magZ, label = 'pitch Axis')
+	plt.plot(magY, magZ, label = 'roll Axis')
+	plt.legend(loc = 'upper right')
+	plt.savefig('XvsY.png')
 	
 #Calibration Sequence
 print 'calibrating'
