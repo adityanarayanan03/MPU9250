@@ -60,7 +60,7 @@ accYCorrection = 0
 accZCorrection = 0
 
 #Time-Related Variables:
-dt = .0165 #delta T for integration
+dt = .019 #delta T for integration
 times = [] #x-axis for plotting
 runTime = int(input("Time for trial:   ")) #user desired run-time
 
@@ -277,7 +277,7 @@ currentTime = 0
 #data collection sequence
 while (currentTime<runTime):
 	currentTime = time.time() - startTime
-	#print currentTime
+	print currentTime
 	sensorValues = getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection)
 	
 	#Call to calculations and storing calculated Values for Plotting

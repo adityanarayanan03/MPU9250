@@ -202,7 +202,7 @@ class MPU9250:
         y = round(y*self.ares, 3)
         z = round(z*self.ares, 3)
 
-        return {"x": -10*x, "y": 10*y, "z": 10*z}
+        return {"x": 10*x, "y": -10*y, "z": 10*z}
 
     ## Read gyro
     #  @param [in] self The object pointer.
