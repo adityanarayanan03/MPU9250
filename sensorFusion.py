@@ -109,11 +109,11 @@ def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
 	theta = 0
 	accPhi = math.radians(accEulerAngle.item((0,0)))
 	accTheta = math.radians(accEulerAngle.item((1,0)))
-	psi = math.atan((sensorValues[9]*math.sin(accPhi) - sensorValues[8]*math.cos(accPhi))/((sensorValues[7]*math.cos(accTheta))+(sensorValues[8]*math.sin(accTheta)*math.sin(accPhi))+(sensorValues[9]*math.sin(accTheta)*math.cos(accPhi))))
+	psi = math.atan2((sensorValues[9]*math.sin(accPhi) - sensorValues[8]*math.cos(accPhi)),((sensorValues[7]*math.cos(accTheta))+(sensorValues[8]*math.sin(accTheta)*math.sin(accPhi))+(sensorValues[9]*math.sin(accTheta)*math.cos(accPhi))))
 	if (magCorrectionMean == 0):
 		psi = math.degrees(psi)
 	else:
-		psi = math.degrees(psi) - magCorrectionMean
+		psi = 2*(math.degrees(psi) - magCorrectionMean)
 	eulerEstimate = np.matrix([[phi],[theta],[psi]])
 	return eulerEstimate
 
@@ -219,12 +219,8 @@ def saveAndPlot():
 	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroEulerRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
 	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
-	plt.figure(13)
-	plt.plot(magX, magY, label = 'yaw Axis')
-	plt.plot(magX, magZ, label = 'pitch Axis')
-	plt.plot(magY, magZ, label = 'roll Axis')
-	plt.legend(loc = 'upper right')
-	plt.savefig('XvsY.png')
+	
+	
 	
 #Calibration Sequence
 print 'calibrating'
