@@ -269,7 +269,7 @@ currentTime = 0
 #data collection sequence
 while (currentTime<runTime):
 	currentTime = time.time() - startTime
-	print currentTime
+	#print currentTime
 	sensorValues = getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection)
 	
 	#Call to calculations and storing calculated Values for Plotting

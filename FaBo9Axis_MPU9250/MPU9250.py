@@ -247,7 +247,7 @@ class MPU9250:
                 y = round(y * self.mres * self.magYcoef, 3)
                 z = round(z * self.mres * self.magZcoef, 3)
 
-        return {"x":y, "y":x, "z":z}
+        return {"x":-1*y, "y":x, "z":z}
 
     ## Read temperature
     #  @param [out] temperature temperature(degrees C)
