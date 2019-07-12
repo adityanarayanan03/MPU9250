@@ -104,7 +104,7 @@ def gyroCalcEuler(sensorValues, prevEulerAngle):
 	eulerAngle = prevEulerAngle + M*currentAngularVelocities*dt
 	return eulerAngle
 
-def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
+def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean, gyroEstimate):
 	phi = 0
 	theta = 0
 	accPhi = math.radians(accEulerAngle.item((0,0)))
@@ -113,9 +113,9 @@ def magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean):
 	if (magCorrectionMean == 0):
 		psi = math.degrees(psi)
 	else:
-		psi = 2*(math.degrees(psi) - magCorrectionMean)
-	eulerEstimate = np.matrix([[phi],[theta],[psi]])
-	return eulerEstimate
+		psi = (math.degrees(psi) - magCorrectionMean)
+	eulerEstimate2 = np.matrix([[phi],[theta],[psi]])
+	return eulerEstimate2
 
 #Function to collect data and store in temporary list
 def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection):
@@ -136,18 +136,18 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	accY.append(accelYCorr)
 	accelZCorr = accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = mag['x']
+	magXCorr = mag['x'] - 26
 	magX.append(magXCorr)
-	magYCorr = mag['y']
+	magYCorr = mag['y'] - 7
 	magY.append(magYCorr)
-	magZCorr = mag['z']
+	magZCorr = mag['z'] +30
 	magZ.append(magZCorr)
 	sensorValues = [currentTime, gyroXCorr, gyroYCorr, gyroZCorr, accelXCorr, accelYCorr, accelZCorr, magXCorr, magYCorr, magZCorr]
 	dataSet.append(sensorValues)
 	return sensorValues
 	
 #Function for Kalman Filtering
-def kalmanFilter(sensorValues, magCorrectionMean):
+def kalmanFilter(sensorValues, magCorrectionMean, gyroYaw):
 	#tell python to modify global forms of variables
 	global A
 	global B
@@ -170,7 +170,7 @@ def kalmanFilter(sensorValues, magCorrectionMean):
 	theta_hat = state_estimate.item((1,0))
 	psi_hat = state_estimate.item((2,0))
 	
-	psi_hat_mag= math.radians(magCalcEuler(sensorValues,accCalcEuler(sensorValues), magCorrectionMean).item((2,0)))
+	psi_hat_mag= math.radians(magCalcEuler(sensorValues,accCalcEuler(sensorValues), magCorrectionMean, gyroYaw).item((2,0)))
 	#psi_hat_mag = 2 * psi_hat_mag - math.radians(2 * magCorrectionMean)
 	
 	phi_dot = p+math.sin(phi_hat)*math.tan(theta_hat)*q+math.cos(phi_hat)*math.tan(theta_hat)*r
@@ -219,6 +219,8 @@ def saveAndPlot():
 	graph(10,accEulerRoll,'accEulerRoll',filteredRoll,'filteredRoll',gyroEulerRoll,'gyroRoll','Roll Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/roll.png')
 	graph(11,accEulerPitch,'accEulerPitch',filteredPitch,'filteredPitch',gyroEulerPitch,'gyroPitch','Pitch Angle Filter Comparison','Angle (degrees)','/comparisons/filteredComparisons/pitch.png')
 	graph(12,magEulerYaw,'magEulerYaw',filteredYaw,'filteredYaw',gyroEulerYaw,'gyroEulerYaw','Yaw Angles Filter Comparison','Anlge (degrees)','/comparisons/filteredComparisons/yaw.png')
+	plt.figure(13)
+	plt.plot(magX,magY)
 	
 	
 	
@@ -227,7 +229,7 @@ print 'calibrating'
 for i in range(100):
 	calSensorValues = getData(0,0,0,0)
 	calAccEuler = accCalcEuler(calSensorValues)
-	calMagEuler = magCalcEuler(calSensorValues, calAccEuler, 0)
+	calMagEuler = magCalcEuler(calSensorValues, calAccEuler, 0, -50)
 	magPsiValues.append(calMagEuler.item((2,0)))
 	time.sleep(.009)
 magCorrectionMean = np.mean(magPsiValues)
@@ -265,7 +267,7 @@ currentTime = 0
 #data collection sequence
 while (currentTime<runTime):
 	currentTime = time.time() - startTime
-	#print currentTime
+	print currentTime
 	sensorValues = getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrection)
 	
 	#Call to calculations and storing calculated Values for Plotting
@@ -280,17 +282,17 @@ while (currentTime<runTime):
 	accEulerPitch.append(accEulerAngle.item((1,0)))
 	accEulerYaw.append(accEulerAngle.item((2,0)))
 
-	magEulerAngle = magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean)
+	magEulerAngle = magCalcEuler(sensorValues, accEulerAngle, magCorrectionMean, gyroEulerAngle.item((2,0)))
 	magEulerRoll.append(magEulerAngle.item((0,0)))
 	magEulerPitch.append(magEulerAngle.item((1,0)))
 	magEulerYaw.append(magEulerAngle.item((2,0)))
 	
-	filteredData = kalmanFilter(sensorValues, magCorrectionMean)
+	filteredData = kalmanFilter(sensorValues, magCorrectionMean, math.degrees(gyroEulerAngle.item((2,0))))
 	filteredRoll.append(filteredData.item((0,0)))
 	filteredPitch.append(filteredData.item((1,0)))
 	filteredYaw.append(filteredData.item((2,0)))
 	
-	time.sleep(.05)
+	time.sleep(.009)
 
 #Saving plots if requested
 if(saveIndicator == "y" or saveIndicator == "Y"):

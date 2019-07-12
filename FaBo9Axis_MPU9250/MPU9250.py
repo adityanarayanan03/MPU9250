@@ -202,7 +202,7 @@ class MPU9250:
         y = round(y*self.ares, 3)
         z = round(z*self.ares, 3)
 
-        return {"x": 10*x, "y": -10*y, "z": 10*z}
+        return {"x": -10*y, "y": -10*x, "z": 10*z}
 
     ## Read gyro
     #  @param [in] self The object pointer.
@@ -220,7 +220,7 @@ class MPU9250:
         y = round(y*self.gres, 3)
         z = round(z*self.gres, 3)
 
-        return {"x":-1*x, "y":y, "z":-1*z}
+        return {"x":y, "y":x, "z":-z}
 
     ## Read magneto
     #  @param [in] self The object pointer.
@@ -247,7 +247,7 @@ class MPU9250:
                 y = round(y * self.mres * self.magYcoef, 3)
                 z = round(z * self.mres * self.magZcoef, 3)
 
-        return {"x":-1*y, "y":x, "z":z}
+        return {"x":x, "y":y, "z":z}
 
     ## Read temperature
     #  @param [out] temperature temperature(degrees C)
