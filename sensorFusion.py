@@ -136,11 +136,11 @@ def getData(currentTime, gyroRollCorrection, gyroPitchCorrection, gyroYawCorrect
 	accY.append(accelYCorr)
 	accelZCorr = accel['z'] + (9.8005-9.78941028858)
 	accZ.append(accelZCorr)
-	magXCorr = mag['x'] - 26
+	magXCorr = mag['x'] 
 	magX.append(magXCorr)
-	magYCorr = mag['y'] - 7
+	magYCorr = mag['y'] 
 	magY.append(magYCorr)
-	magZCorr = mag['z'] +30
+	magZCorr = mag['z'] 
 	magZ.append(magZCorr)
 	sensorValues = [currentTime, gyroXCorr, gyroYCorr, gyroZCorr, accelXCorr, accelYCorr, accelZCorr, magXCorr, magYCorr, magZCorr]
 	dataSet.append(sensorValues)
